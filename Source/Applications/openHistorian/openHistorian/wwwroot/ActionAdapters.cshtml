@@ -72,6 +72,67 @@
 
         return securityPrincipal.IsInRole("Administrator,Editor");
     }
+
+    public string SettingsForm()
+    {
+        // This Function returns the settings Fields for the given ActionAdapter
+        string result = "";
+        result = result + "<!-- ko foreach: new Array(3) -->";
+        result = result + "<div class='col-md-4' data-bind='foreach: $parent.ConnectionStringParameters'>";
+        result = result + "<!-- ko if: ($index() %3 == $parentContext.$index()) -->";
+        result = result + "<div class='form-group' data-bind=\"css: {'has-error': !fieldIsValid(Name,IsRequired), 'has-feedback': !fieldIsValid(Name,IsRequired), 'has-no-value': !fieldHasValue(Name,IsRequired)}, attr: {'title': Description}\" data-toggle='tooltip' data-trigger='focus' data-placement='auto bottom'>";
+
+        result = result + EnumField();
+        result = result + BoolField();
+        result = result + TextField();
+
+        result = result + "</div>";
+        result = result + "<!-- /ko -->";
+        result = result + "</div>";
+        result = result + "<!-- /ko -->";
+        return result;
+    }
+
+    private string EnumField()
+    {
+        string result = "";
+        result = result + "<!-- ko if: IsEnum -->";
+        result = result + "<label data-bind=\"text: Name, attr: {'for': Name}\"></label>";
+        result = result + " <select class='form-control' data-bind=\"value: Value, options: EnumValues, valueAllowUnset: !IsRequired, attr: {'id': Name, 'disabled': ($root.recordMode()===RecordMode.View ? true : undefined)}\"></select>";
+        result = result + "<!-- /ko -->";
+        return result;
+    }
+
+    private string BoolField()
+    {
+        string result = "";
+        result = result + "<!-- ko if: IsBoolean -->";
+        result = result + "<label data-bind=\"text: Name\"></label>";
+        result = result + "<div>";
+        result = result + "<input type='radio' value='True' data-bind=\"checkded: Value, attr: {'name': Name, 'disabled': ($root.recordMode()===RecordMode.View ? true : undefined)}\" />";
+        result = result + "<span>True</span>";
+        result = result + "<input type='radio' value='False' data-bind=\"checkded: Value, attr: {'name': Name, 'disabled': ($root.recordMode()===RecordMode.View ? true : undefined)}\" />";
+        result = result + "<span>False</span>";
+        result = result + "</div>";
+        result = result + "<!-- /ko -->";
+        return result;
+    }
+
+    private string TextField()
+    {
+        string result = "";
+        result = result + "<!-- ko if: IsOther -->";
+        result = result + "<label data-bind=\"text: Name, attr: {'for': Name}\"></label>";
+        result = result + "<input type='text' class='form-control' data-bind=\"textInput: Value, attr: {'id': Name, 'readonly': ($root.recordMode()===RecordMode.View ? true : undefined)}\" />";
+        result = result + " <!-- /ko -->";
+        return result;
+    }
+
+    private string CustomField()
+    {
+        return "";
+    }
+
 }
 @helper BodyRows()
 {
@@ -86,15 +147,25 @@
 }
 @helper AddNewEditDialog(DataContext dataContext)
 {
-    <div class="col-md-6">
-        @Raw(dataContext.AddInputField<CustomActionAdapter>("ID", customDataBinding: "disable: true", groupDataBinding: "visible: $root.recordMode() !== RecordMode.AddNew"))
-        
+    <div class="col-md-12">
+        <div class="col-md-6">
+            @Raw(dataContext.AddInputField<CustomActionAdapter>("ID", customDataBinding: "disable: true", groupDataBinding: "visible: $root.recordMode() !== RecordMode.AddNew"))
+            @Raw(dataContext.AddInputField<CustomActionAdapter>("AdapterName", fieldLabel: "Name"))
+        </div>
+        <div class="col-md-6">
+            @Raw(dataContext.AddInputField<CustomActionAdapter>("TypeName", customDataBinding: "disable: true"))
+            <div class="form-inline pull-right">
+                @Raw(dataContext.AddCheckBoxField<CustomActionAdapter>("Enabled"))
+            </div>
+        </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-12">
+        @Raw(SettingsForm())
     </div>
 }
 
 @Html.RenderResource("GSF.Web.Model.Views.PagedViewModel.cshtml")
+
 @section Scripts {
     <script>
         var modbusProtocolID = 0;
@@ -134,7 +205,7 @@
             if (record.Enabled)
                 serviceHub.sendCommand("initialize " + record.AdapterName);
             else
-                serviceHub.sendCommand("reload config");
+                serviceHub.sendCommand("reloadconfig");
         }
     </script>
 }

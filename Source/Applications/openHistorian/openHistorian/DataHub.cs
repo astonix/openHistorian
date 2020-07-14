@@ -566,6 +566,11 @@ namespace openHistorian
 
         #region [ CustomActionAdapter Table Operations ]
 
+        public CustomActionAdapter QueryAdapterByID(int adapterID)
+        {
+            return DataContext.Table<CustomActionAdapter>().QueryRecordWhere("ID = {0}", adapterID) ?? NewCustomActionAdapter();
+        }
+
         [RecordOperation(typeof(CustomActionAdapter), RecordOperation.QueryRecordCount)]
         public int QueryCustomActionAdapterCount(string filterText)
         {
@@ -602,6 +607,7 @@ namespace openHistorian
         [RecordOperation(typeof(CustomActionAdapter), RecordOperation.UpdateRecord)]
         public void UpdateCustomActionAdapter(CustomActionAdapter customActionAdapter)
         {
+            customActionAdapter.UpdateConnectionString(customActionAdapter.ConnectionStringParameters);
             DataContext.Table<CustomActionAdapter>().UpdateRecord(customActionAdapter);
         }
 
